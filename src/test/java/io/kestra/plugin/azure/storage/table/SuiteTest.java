@@ -113,6 +113,7 @@ class SuiteTest {
             .endpoint(Property.ofValue(this.endpoint))
             .connectionString(Property.ofValue(connectionString))
             .table(Property.ofValue(this.table))
+            .maxFiles(Property.ofValue(50))
             .filter(Property.ofValue("PartitionKey eq '" + partitionKey + "'"))
             .build();
 
@@ -124,7 +125,21 @@ class SuiteTest {
 
         assertThat(listOutput.getCount(), is(50L));
         assertThat(result.size(), is(50));
-        assertThat(((Map<String, Object>) result.get(0).get("properties")).get("int32"), is(123456789));
+        assertThat(((Map<String, Object>) result.getFirst().get("properties")).get("int32"), is(123456789));
+
+        // list task with default value of maxFiles property
+         List listWithDefaultLimit  = List.builder()
+            .endpoint(Property.ofValue(this.endpoint))
+            .connectionString(Property.ofValue(connectionString))
+            .table(Property.ofValue(this.table))
+            .filter(Property.ofValue("PartitionKey eq '" + partitionKey + "'"))
+            .build();
+
+        List.Output listWithDefaultLimitOutput = listWithDefaultLimit.run(runContext);
+
+        //Should have 25 size out of 50
+        assertThat(listWithDefaultLimitOutput.getCount(),is(25));
+
 
         // delete
         Delete delete = Delete.builder()
